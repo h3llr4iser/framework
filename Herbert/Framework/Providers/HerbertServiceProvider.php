@@ -1,6 +1,7 @@
 <?php namespace Herbert\Framework\Providers;
 
 use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Database\Capsule\Manager;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cookie\CookieJar;
 use Herbert\Framework\Session;
@@ -132,29 +133,15 @@ class HerbertServiceProvider extends ServiceProvider {
         $sites = wp_get_sites();
 
         if(!$sites){
-            $capsule->addConnection([
-                'driver' => 'mysql',
-                'host' => DB_HOST,
-                'database' => DB_NAME,
-                'username' => DB_USER,
-                'password' => DB_PASSWORD,
-                'charset' => DB_CHARSET,
-                'collation' => DB_COLLATE ?: 'utf8_general_ci',
-                'prefix' => $wpdb->prefix
-            ]);
+            $this->addConnection($capsule,$wpdb->base_prefix);
         }else{
             foreach($sites as $site){
-
-                $capsule->addConnection([
-                    'driver' => 'mysql',
-                    'host' => DB_HOST,
-                    'database' => DB_NAME,
-                    'username' => DB_USER,
-                    'password' => DB_PASSWORD,
-                    'charset' => DB_CHARSET,
-                    'collation' => DB_COLLATE ?: 'utf8_general_ci',
-                    'prefix' => $wpdb->base_prefix.$site['blog_id']
-                ],$wpdb->base_prefix.$site['blog_id']);
+                if($site['blog_id'] == 1){
+                    $prefix = $wpdb->base_prefix;
+                }else{
+                    $prefix = $wpdb->base_prefix.$site['blog_id']."_";
+                }
+                $this->addConnection($capsule,$prefix);
             }
         }
 
@@ -164,6 +151,20 @@ class HerbertServiceProvider extends ServiceProvider {
 
         $capsule->setAsGlobal();
         $capsule->bootEloquent();
+    }
+
+    private function addConnection(Manager $capsule, $prefix)
+    {
+        $capsule->addConnection([
+            'driver' => 'mysql',
+            'host' => DB_HOST,
+            'database' => DB_NAME,
+            'username' => DB_USER,
+            'password' => DB_PASSWORD,
+            'charset' => DB_CHARSET,
+            'collation' => DB_COLLATE ?: 'utf8_general_ci',
+            'prefix' => $prefix
+        ],$prefix);
     }
 
     /**
