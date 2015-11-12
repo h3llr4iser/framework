@@ -4,6 +4,8 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cookie\CookieJar;
 use Herbert\Framework\Session;
+use Illuminate\Events\Dispatcher;
+use Illuminate\Container\Container;
 
 /**
  * @see http://getherbert.com
@@ -23,7 +25,7 @@ class HerbertServiceProvider extends ServiceProvider {
             'env',
             defined('HERBERT_ENV') ? HERBERT_ENV
                 : (defined('WP_DEBUG') ? 'local'
-                    : 'production')
+                : 'production')
         );
 
         $this->app->instance(
@@ -127,17 +129,38 @@ class HerbertServiceProvider extends ServiceProvider {
         global $wpdb;
 
         $capsule = new Capsule($this->app);
+        $sites = wp_get_sites();
 
-        $capsule->addConnection([
-            'driver' => 'mysql',
-            'host' => DB_HOST,
-            'database' => DB_NAME,
-            'username' => DB_USER,
-            'password' => DB_PASSWORD,
-            'charset' => DB_CHARSET,
-            'collation' => DB_COLLATE ?: 'utf8_general_ci',
-            'prefix' => $wpdb->prefix
-        ]);
+        if(!$sites){
+            $capsule->addConnection([
+                'driver' => 'mysql',
+                'host' => DB_HOST,
+                'database' => DB_NAME,
+                'username' => DB_USER,
+                'password' => DB_PASSWORD,
+                'charset' => DB_CHARSET,
+                'collation' => DB_COLLATE ?: 'utf8_general_ci',
+                'prefix' => $wpdb->prefix
+            ]);
+        }else{
+            foreach($sites as $site){
+
+                $capsule->addConnection([
+                    'driver' => 'mysql',
+                    'host' => DB_HOST,
+                    'database' => DB_NAME,
+                    'username' => DB_USER,
+                    'password' => DB_PASSWORD,
+                    'charset' => DB_CHARSET,
+                    'collation' => DB_COLLATE ?: 'utf8_general_ci',
+                    'prefix' => $wpdb->base_prefix.$site['blog_id']
+                ],$wpdb->base_prefix.$site['blog_id']);
+            }
+        }
+
+
+        $capsule->setEventDispatcher(new Dispatcher(new Container));
+
 
         $capsule->setAsGlobal();
         $capsule->bootEloquent();
