@@ -133,15 +133,16 @@ class HerbertServiceProvider extends ServiceProvider {
         $sites = wp_get_sites();
 
         if(!$sites){
-            $this->addConnection($capsule,'default');
+            $this->addConnection($capsule,$wpdb->base_prefix,'default');
         }else{
             foreach($sites as $site){
                 if($site['blog_id'] == 1){
-                    $prefix = 'default';
+                    $prefix = $wpdb->base_prefix;
+                    $databaseName = 'default';
                 }else{
-                    $prefix = $wpdb->base_prefix.$site['blog_id']."_";
+                    $prefix = $databaseName = $wpdb->base_prefix.$site['blog_id']."_";
                 }
-                $this->addConnection($capsule,$prefix);
+                $this->addConnection($capsule,$prefix,$databaseName);
             }
         }
 
@@ -153,7 +154,7 @@ class HerbertServiceProvider extends ServiceProvider {
         $capsule->bootEloquent();
     }
 
-    private function addConnection(Manager $capsule, $prefix)
+    private function addConnection(Manager $capsule, $prefix, $databaseName)
     {
         $capsule->addConnection([
             'driver' => 'mysql',
@@ -164,7 +165,7 @@ class HerbertServiceProvider extends ServiceProvider {
             'charset' => DB_CHARSET,
             'collation' => DB_COLLATE ?: 'utf8_general_ci',
             'prefix' => $prefix
-        ],$prefix);
+        ],$databaseName);
     }
 
     /**
