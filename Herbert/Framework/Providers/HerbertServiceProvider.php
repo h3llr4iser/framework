@@ -133,11 +133,11 @@ class HerbertServiceProvider extends ServiceProvider {
         $sites = wp_get_sites();
 
         if(!$sites){
-            $this->addConnection($capsule,$wpdb->base_prefix);
+            $this->addConnection($capsule,'default');
         }else{
             foreach($sites as $site){
                 if($site['blog_id'] == 1){
-                    $prefix = $wpdb->base_prefix;
+                    $prefix = 'default';
                 }else{
                     $prefix = $wpdb->base_prefix.$site['blog_id']."_";
                 }
