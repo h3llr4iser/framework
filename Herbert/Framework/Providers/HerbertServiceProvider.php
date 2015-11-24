@@ -162,8 +162,8 @@ class HerbertServiceProvider extends ServiceProvider {
             'database' => DB_NAME,
             'username' => DB_USER,
             'password' => DB_PASSWORD,
-            'charset' => DB_CHARSET,
-            'collation' => DB_COLLATE ?: 'utf8_general_ci',
+            'charset' => DB_CHARSET == "DB_CHARSET" ? "utf8mb4" : DB_CHARSET,
+            'collation' => DB_COLLATE == "DB_COLLATE" ? "utf8mb4_unicode_ci" : DB_COLLATE,
             'prefix' => $prefix
         ],$databaseName);
     }
